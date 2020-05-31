@@ -45,18 +45,27 @@ public class UsuarioService {
 		dao.saveAndFlush(novoUsuario);
 	}
 	
+	private boolean validaUpdate(Long id, UsuarioDtoEntrada dto) {
+		Optional<Long> idUsuario = dao.buscarIdPeloLogin(dto.getLogin());
+		if (idUsuario.isPresent() && !idUsuario.get().equals(id)) {
+			return false;
+		}
+		idUsuario = dao.buscarIdPeloEmail(dto.getEmail());
+		if (idUsuario.isPresent() && !idUsuario.get().equals(id)) {
+			return false;
+		}
+		return true;
+	}
+	
 	@Transactional
 	public boolean atualizar(Long id, UsuarioDtoEntrada dto) {
-		if (this.buscarExistenciaDoUsuarioPeloEmail(dto.getEmail()) > 0) {
-			return false;
+		if (validaUpdate(id, dto)) {
+			Usuario usuarioExistente = dao.findById(id).get();
+			Usuario usuarioAtualizado = dto.atualizar(usuarioExistente);
+			dao.saveAndFlush(usuarioAtualizado);
+			return true;
 		}
-		if (this.buscarExistenciaDoUsuarioPeloLogin(dto.getLogin()) > 0) {
-			return false;
-		}
-		Usuario usuarioExistente = dao.findById(id).get();
-		Usuario usuarioAtualizado = dto.atualizar(usuarioExistente);
-		dao.saveAndFlush(usuarioAtualizado);
-		return true;
+		return false;
 	}
 
 	public Optional<UsuarioDtoSaida> logar(String login, String senha) {

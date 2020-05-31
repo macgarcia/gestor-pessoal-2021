@@ -34,6 +34,12 @@ public class Anotacao extends AbstractEntity {
 	@Deprecated
 	public Anotacao() {}
 
+	public Anotacao(String titulo, String descricao, Usuario usuario) {
+		this.titulo = titulo;
+		this.descricao = descricao;
+		this.usuario = usuario;
+	}
+
 	public String getTitulo() {
 		return titulo;
 	}
