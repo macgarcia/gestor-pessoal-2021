@@ -1,5 +1,7 @@
 package br.com.macgarcia.gestorpessoal.resource;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.macgarcia.gestorpessoal.DTO.entrada.AnotacaoDtoEntrada;
+import br.com.macgarcia.gestorpessoal.DTO.saida.AnotacaoDtoSaida;
 import br.com.macgarcia.gestorpessoal.service.AnotacaoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -31,6 +34,23 @@ public class AnotacaoResource {
 	@Autowired
 	public AnotacaoResource(AnotacaoService service) {
 		this.service = service;
+	}
+
+	@Operation(summary = "Buscar unica as anotação do usuário", description = "Através do identificador é retornada a anotação")
+	@ApiResponse(responseCode = "200", description = "Recuperou as informações solicitadas")
+	@ApiResponse(responseCode = "400", description = "Identificador do usuário inválido")
+	@ApiResponse(responseCode = "404", description = "Dados não encontrados")
+	@GetMapping(value = "/unica/{id}")
+	public ResponseEntity<?> buscarUnicaAnotacao(@PathVariable("id") Long id) {
+		if (id <= 0) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body("Identificador inválido");
+		}
+		Optional<AnotacaoDtoSaida> possivelAnotacao = service.buscarUnica(id);
+		if (!possivelAnotacao.isPresent()) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Dados não encontrados");
+		}
+		return ResponseEntity.status(HttpStatus.OK).body(possivelAnotacao.get());
 	}
 
 	@Operation(summary = "Buscar todas as anotações do usuário", description = "Através do identificador do usuário é retornado todas as suas anotações")

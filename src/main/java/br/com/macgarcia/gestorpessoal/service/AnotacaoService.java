@@ -1,6 +1,8 @@
 package br.com.macgarcia.gestorpessoal.service;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -26,7 +28,9 @@ public class AnotacaoService {
 
 	public List<AnotacaoDtoSaida> buscarAnotacoes() {
 		Stream<Anotacao> anotacoes = dao.findAll().stream();
-		return anotacoes.map(e -> {return new AnotacaoDtoSaida(e);})
+		return anotacoes
+				.sorted(Comparator.comparing(Anotacao::getId).reversed())
+				.map(e -> {return new AnotacaoDtoSaida(e);})
 				.collect(Collectors.toList());
 	}
 
@@ -47,6 +51,14 @@ public class AnotacaoService {
 	@Transactional
 	public void apagarAnotacao(Long idAnotacao) {
 		dao.deleteById(idAnotacao);
+	}
+
+	public Optional<AnotacaoDtoSaida> buscarUnica(Long id) {
+		Optional<Anotacao> possivelAnotacao = dao.findById(id);
+		if (possivelAnotacao.isPresent()) {
+			return Optional.of(new AnotacaoDtoSaida(possivelAnotacao.get()));
+		}
+		return Optional.empty();
 	}
 
 }
