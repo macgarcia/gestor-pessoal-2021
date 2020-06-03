@@ -42,6 +42,15 @@ public class Renda extends AbstractEntity {
 	@Deprecated
 	public Renda() {}
 
+	public Renda(@NotBlank(message = "Decrição da renda é obrigatório") String descricao,
+			@NotNull(message = "Valor da renda é obrigatório") @Positive(message = "Valor informado é inválido") Double valor,
+			@NotNull(message = "Data da renda é obrigatória") LocalDate dataRenda, Usuario usuario) {
+		this.descricao = descricao;
+		this.valor = valor;
+		this.dataRenda = dataRenda;
+		this.usuario = usuario;
+	}
+
 	public String getDescricao() {
 		return descricao;
 	}

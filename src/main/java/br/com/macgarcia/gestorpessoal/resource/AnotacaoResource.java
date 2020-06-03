@@ -2,6 +2,8 @@ package br.com.macgarcia.gestorpessoal.resource;
 
 import java.util.Optional;
 
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -69,7 +71,7 @@ public class AnotacaoResource {
 	@Operation(summary = "Criação de uma nova anotação", description = "Criação de uma nova anotação baseado json que esta no corpo da requisição")
 	@ApiResponse(responseCode = "201", description = "Anotação criada")
 	@PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<?> salvarAnotacao(@RequestBody AnotacaoDtoEntrada dto) {
+	public ResponseEntity<?> salvarAnotacao(@Valid @RequestBody AnotacaoDtoEntrada dto) {
 		service.salvarAnotacao(dto);
 		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
@@ -78,7 +80,7 @@ public class AnotacaoResource {
 	@ApiResponse(responseCode = "200", description = "Anotação atualizada")
 	@ApiResponse(responseCode = "400", description = "Identificador da anotação inválido")
 	@PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<?> atualizarAnotacao(@PathVariable("id") Long id, @RequestBody AnotacaoDtoEntrada dto) {
+	public ResponseEntity<?> atualizarAnotacao(@PathVariable("id") Long id, @Valid @RequestBody AnotacaoDtoEntrada dto) {
 		if (id <= 0) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 					.body("Identificador inválido");
