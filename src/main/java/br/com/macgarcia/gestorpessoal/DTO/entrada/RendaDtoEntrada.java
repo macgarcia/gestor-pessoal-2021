@@ -66,4 +66,11 @@ public class RendaDtoEntrada implements Serializable {
 	public Renda criar(Usuario usuario) {
 		return new Renda(this.descricao, this.valor, this.dataRenda, usuario);
 	}
+
+	public Renda atualizar(Renda rendaExistente) {
+		rendaExistente.setDescricao(descricao);
+		rendaExistente.setValor(valor);
+		rendaExistente.setDataRenda(dataRenda);
+		return rendaExistente;
+	}
 }
