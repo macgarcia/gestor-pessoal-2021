@@ -46,6 +46,17 @@ public class Divida extends AbstractEntity {
 	@Deprecated
 	public Divida() {}
 
+	public Divida(@NotBlank(message = "Descrição da divida é obrigatória") String descricao,
+			@NotNull(message = "Valor da divida é obrigatório") @Positive(message = "Informe um valor válido") Double valor,
+			@NotNull(message = "Data da divida é obrigatória") LocalDate dataDivida,
+			@NotNull(message = "Condição da divida é obrigatório") boolean pago, Usuario usuario) {
+		this.descricao = descricao;
+		this.valor = valor;
+		this.dataDivida = dataDivida;
+		this.pago = pago;
+		this.usuario = usuario;
+	}
+
 	public String getDescricao() {
 		return descricao;
 	}

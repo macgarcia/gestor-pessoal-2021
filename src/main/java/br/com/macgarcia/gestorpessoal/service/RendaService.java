@@ -38,7 +38,8 @@ public class RendaService {
 
 	public List<RendaDtoSaida> buscarRendas(Long idUsuario) {
 		Stream<Renda> rendas = dao.findAll().stream();
-		return rendas.sorted(Comparator.comparing(Renda::getDataRenda))
+		return rendas.filter(e -> e.getUsuario().getId().equals(idUsuario))
+				.sorted(Comparator.comparing(Renda::getDataRenda))
 				.map(e -> {return new RendaDtoSaida(e);})
 				.collect(Collectors.toList());
 	}

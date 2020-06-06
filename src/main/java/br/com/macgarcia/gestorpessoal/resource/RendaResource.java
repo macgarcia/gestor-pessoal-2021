@@ -76,6 +76,7 @@ public class RendaResource {
 		return ResponseEntity.status(HttpStatus.OK).body(service.buscarUnicaRenda(idRenda));
 	}
 	
+	//ARRUMAR A PESQUISA IGUAL A DA DIVIDA
 	@Operation(summary = "Pesquisa de rendas", 
 			description = "Através das informações: Descrição e um periodo com data inicial e data final, será retornada as rendas que atenderem os parâmetros."
 			+ " Caso queira não utilizar algum dos parâmetros, passe a palavra 'null' para o mesmo."
