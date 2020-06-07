@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,6 +24,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping(value = "/dividas")
+@CrossOrigin
 @Tag(name = "Serviços para manipulação de dívidas do usuário")
 public class DividaResource {
 	
@@ -137,6 +139,25 @@ public class DividaResource {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao tentar excluir");
 		}
 		return ResponseEntity.status(HttpStatus.OK).build();
+	}
+	
+	//Método para relatório
+	@Operation(summary = "Serviço para relatórios", description = "Geração de relatório mensal")
+	@ApiResponse(responseCode = "200", description = "Requisição feita com sucesso")
+	@ApiResponse(responseCode = "400", description = "Identificador inválido")
+	@GetMapping(value = "/relatorio/{idUsuario}/{mes}/{ano}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<?> gerarRelatotioMensal(@PathVariable("idUsuario") Long idUsuario,
+			@PathVariable("mes") Integer mes, @PathVariable("ano") Integer ano) {
+		if (idUsuario <= 0) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identificador inválido");
+		}
+		if (mes > 12 || mes <= 0) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identificador do mês inválido");
+		}
+		if (ano.toString().length() != 4) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identificador do ano inválido");
+		}
+		return ResponseEntity.status(HttpStatus.OK).body(service.buscarInformacaoMensal(idUsuario, mes, ano));
 	}
 	
 }

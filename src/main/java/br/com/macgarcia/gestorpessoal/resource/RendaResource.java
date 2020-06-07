@@ -76,17 +76,22 @@ public class RendaResource {
 		return ResponseEntity.status(HttpStatus.OK).body(service.buscarUnicaRenda(idRenda));
 	}
 	
-	//ARRUMAR A PESQUISA IGUAL A DA DIVIDA
 	@Operation(summary = "Pesquisa de rendas", 
 			description = "Através das informações: Descrição e um periodo com data inicial e data final, será retornada as rendas que atenderem os parâmetros."
 			+ " Caso queira não utilizar algum dos parâmetros, passe a palavra 'null' para o mesmo."
 			+" Informe a data no formato: yyyy-MM-dd")
 	@ApiResponse(responseCode = "200", description = "Requisição feita com sucesso")
-	@GetMapping(value = "/pesquisar/{descricao}/{dataInicial}/{dataFinal}")
-	public ResponseEntity<?> buscarRendasPorPesquisa( @PathVariable("descricao") String descricao, @PathVariable("dataInicial") String dataInicial,
+	@ApiResponse(responseCode = "400", description = "Identificadores inválido")
+	@GetMapping(value = "/pesquisar/{idUsuario}/{descricao}/{dataInicial}/{dataFinal}")
+	public ResponseEntity<?> buscarRendasPorPesquisa(@PathVariable("idUsuario") Long idUsuario,
+			@PathVariable("descricao") String descricao, 
+			@PathVariable("dataInicial") String dataInicial,
 			@PathVariable("dataFinal") String dataFinal) {
+		if (idUsuario <= 0) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+		}
 		return ResponseEntity.status(HttpStatus.OK)
-				.body(service.pesquisar(descricao, dataInicial, dataFinal));
+				.body(service.pesquisar(idUsuario, descricao, dataInicial, dataFinal));
 	}
 
 	@Operation(summary = "Serviço para adição de uma nova renda", description = "Adição de uma nova renda a partir dos dados embutidos na requisição")
@@ -143,6 +148,25 @@ public class RendaResource {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao excluir");
 		}
 		return ResponseEntity.status(HttpStatus.OK).build();
+	}
+	
+	//Método para relatório
+	@Operation(summary = "Serviço para relatórios", description = "Geração de relatório mensal")
+	@ApiResponse(responseCode = "200", description = "Requisição feita com sucesso")
+	@ApiResponse(responseCode = "400", description = "Identificador inválido")
+	@GetMapping(value = "/relatorio/{idUsuario}/{mes}/{ano}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<?> gerarRelatorioMensal(@PathVariable("idUsuario") Long idUsuario,
+			@PathVariable("mes") Integer mes, @PathVariable("ano") Integer ano) {
+		if (idUsuario <= 0) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identificador inválido");
+		}
+		if (mes > 12 || mes <= 0) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identificador do mês inválido");
+		}
+		if (ano.toString().length() != 4) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identificador do ano inválido");
+		}
+		return ResponseEntity.status(HttpStatus.OK).body(service.buscarInformacaoMensal(idUsuario, mes, ano));
 	}
 
 }

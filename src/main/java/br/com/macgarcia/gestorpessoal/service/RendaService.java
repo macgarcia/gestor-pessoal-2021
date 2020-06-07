@@ -36,10 +36,10 @@ public class RendaService {
 	@PersistenceContext
 	private EntityManager em;
 
+	@Transactional
 	public List<RendaDtoSaida> buscarRendas(Long idUsuario) {
-		Stream<Renda> rendas = dao.findAll().stream();
-		return rendas.filter(e -> e.getUsuario().getId().equals(idUsuario))
-				.sorted(Comparator.comparing(Renda::getDataRenda))
+		Stream<Renda> rendas = dao.buscarRendasDoUsuario(idUsuario);
+		return rendas.sorted(Comparator.comparing(Renda::getDataRenda))
 				.map(e -> {return new RendaDtoSaida(e);})
 				.collect(Collectors.toList());
 	}
@@ -69,48 +69,31 @@ public class RendaService {
 	}
 
 	@Transactional
-	public List<RendaDtoSaida> pesquisar(String descricao, String dataInicial, String dataFinal) {
+	public List<RendaDtoSaida> pesquisar(Long idUsuario, String descricao, String dataInicial, String dataFinal) {
 		StringBuilder sql = new StringBuilder();
-		sql.append("select r from Renda r ");
+		sql.append("select r from Renda r where r.usuario.id = " + idUsuario);
+		
 		definirParametros(sql, descricao, dataInicial, dataFinal);
+		
 		TypedQuery<Renda> query = em.createQuery(sql.toString(), Renda.class);
+		
 		definirValores(query, descricao, dataInicial, dataFinal);
-		Stream<Renda> rendas = query.getResultList().stream();
+		
+		Stream<Renda> rendas = query.getResultStream();
 		return rendas.sorted(Comparator.comparing(Renda::getDataRenda))
 				.map(e -> {return new RendaDtoSaida(e);})
 				.collect(Collectors.toList());
 	}
 
 	private void definirParametros(StringBuilder sql, String... campos) {
-		int index = 0;
-		boolean achou = false;
-		int tamanho = campos.length;
-		while(!achou && index < tamanho) {
-			if (!campos[index].equals("null")) {
-				sql.append(" where ");
-				achou = true;
-			}
-			index++;
-		}
-		
 		if (!campos[0].equals("null") && !campos[0].isEmpty()) {
-			sql.append(" lower(r.descricao) like :descricao ");
+			sql.append(" and lower(r.descricao) like :descricao ");
 		}
-		
 		if (!campos[1].equals("null") && !campos[1].isEmpty()) {
-			if (sql.toString().contains("descricao")) {
-				sql.append(" and r.dataRenda >= :dataInicial ");
-			} else {
-				sql.append(" r.dataRenda >= :dataInicial ");
-			}
+			sql.append(" and r.dataRenda >= :dataInicial ");
 		}
-		
 		if (!campos[2].equals("null") && !campos[2].isEmpty()) {
-			if (sql.toString().contains("descricao") || sql.toString().contains("dataRenda")) {
-				sql.append(" and r.dataRenda <= :dataFinal ");
-			} else {
-				sql.append(" r.dataRenda <= :dataFinal ");
-			}
+			sql.append(" and r.dataRenda <= :dataFinal ");
 		}
 	}
 
@@ -152,6 +135,15 @@ public class RendaService {
 	public boolean verificarExistencia(Long id) {
 		Optional<Renda> renda = dao.findById(id);
 		return renda.isPresent() ? true : false;
+	}
+
+	//Utilizado para relatório mensal
+	@Transactional
+	public List<RendaDtoSaida> buscarInformacaoMensal(Long idUsuario, Integer mes, Integer ano) {
+		Stream<Renda> rendas = dao.buscarInformacaoMensal(idUsuario, mes, ano);
+		return rendas.sorted(Comparator.comparing(Renda::getDataRenda))
+				.map(e -> {return new RendaDtoSaida(e);})
+				.collect(Collectors.toList());
 	}
 
 }

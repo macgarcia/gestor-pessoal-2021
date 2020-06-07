@@ -38,7 +38,7 @@ public class DividaService {
 
 	public boolean verificarRegistro(Long idDivida) {
 		Optional<Divida> possivelDivida = dao.findById(idDivida);
-		return possivelDivida.isPresent() ? true : false;
+		return possivelDivida.isPresent();
 	}
 
 	public DividaDtoSaida buscarUnicaDivida(Long idDivida) {
@@ -132,5 +132,14 @@ public class DividaService {
 		} catch(Exception e) {
 			return false;
 		}
+	}
+
+	//Utilizado para relatório mensal
+	@Transactional
+	public List<DividaDtoSaida> buscarInformacaoMensal(Long idUsuario, Integer mes, Integer ano) {
+		Stream<Divida> dividas = dao.buscarInformacaoMensal(idUsuario, mes, ano);
+		return dividas.sorted(Comparator.comparing(Divida::getDataDivida))
+				.map(e -> {return new DividaDtoSaida(e);})
+				.collect(Collectors.toList());
 	}
 }

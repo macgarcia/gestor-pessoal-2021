@@ -3,6 +3,9 @@ package br.com.macgarcia.gestorpessoal.DTO.saida;
 import java.io.Serializable;
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonFormat.Shape;
+
 import br.com.macgarcia.gestorpessoal.model.Divida;
 
 public class DividaDtoSaida implements Serializable {
@@ -12,6 +15,7 @@ public class DividaDtoSaida implements Serializable {
 	private Long id;
 	private String descricao;
 	private Double valor;
+	@JsonFormat(shape = Shape.STRING, pattern = "dd/MM/yyyy")
 	private LocalDate dataDivida;
 	private boolean pago;
 
