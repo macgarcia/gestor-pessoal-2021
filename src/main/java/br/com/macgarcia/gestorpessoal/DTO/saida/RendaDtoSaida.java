@@ -8,6 +8,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonFormat.Shape;
 
 import br.com.macgarcia.gestorpessoal.model.Renda;
@@ -70,5 +71,10 @@ public class RendaDtoSaida implements Serializable {
 
 	public void setDataRenda(LocalDate dataRenda) {
 		this.dataRenda = dataRenda;
+	}
+	
+	@JsonIgnore
+	public Integer getMesDaData() {
+		return this.dataRenda.getMonth().getValue();
 	}
 }

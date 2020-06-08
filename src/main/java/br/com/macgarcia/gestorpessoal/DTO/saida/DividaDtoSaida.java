@@ -5,6 +5,7 @@ import java.time.LocalDate;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonFormat.Shape;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import br.com.macgarcia.gestorpessoal.model.Divida;
 
@@ -65,5 +66,10 @@ public class DividaDtoSaida implements Serializable {
 
 	public void setPago(boolean pago) {
 		this.pago = pago;
+	}
+	
+	@JsonIgnore
+	public Integer getMesDaData() {
+		return this.dataDivida.getMonth().getValue();
 	}
 }

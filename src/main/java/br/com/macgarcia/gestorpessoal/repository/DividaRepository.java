@@ -19,4 +19,9 @@ public interface DividaRepository extends JpaRepository<Divida, Long>{
 	//Método de relatório mensal
 	@Query("select d from Divida d where d.usuario.id = :idUsuario and month(d.dataDivida) = :mes and year(d.dataDivida) = :ano")
 	Stream<Divida> buscarInformacaoMensal(@Param("idUsuario") Long idUsuario, @Param("mes") Integer mes, @Param("ano") Integer ano);
+
+	//Método de relatório anual
+	@Query("select d from Divida d where d.usuario.id = :idUsuario and year(d.dataDivida) = :ano")
+	Stream<Divida> buscarDividasDoAno(@Param("idUsuario") Long idUsuario, @Param("ano") Integer ano);
+	
 }

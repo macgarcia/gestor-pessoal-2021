@@ -141,8 +141,8 @@ public class DividaResource {
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
 	
-	//Método para relatório
-	@Operation(summary = "Serviço para relatórios", description = "Geração de relatório mensal")
+	//Método para relatório mensal
+	@Operation(summary = "Serviço para relatórios mensais", description = "Geração de relatório mensal")
 	@ApiResponse(responseCode = "200", description = "Requisição feita com sucesso")
 	@ApiResponse(responseCode = "400", description = "Identificador inválido")
 	@GetMapping(value = "/relatorio/{idUsuario}/{mes}/{ano}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -159,5 +159,21 @@ public class DividaResource {
 		}
 		return ResponseEntity.status(HttpStatus.OK).body(service.buscarInformacaoMensal(idUsuario, mes, ano));
 	}
+	
+	//Método para relatório anual
+	@Operation(summary = "Serviço para relatórios anuais", description = "Geração de relatório mensal")
+	@ApiResponse(responseCode = "200", description = "Requisição feita com sucesso")
+	@ApiResponse(responseCode = "400", description = "Identificador inválido")
+	@GetMapping(value = "/relatorio/{idUsuario}/{ano}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<?> buscarDividasDoAno(@PathVariable("idUsuario") Long idUsuario, @PathVariable("ano") Integer ano) {
+		if (idUsuario <= 0) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identificador inválido");
+		}
+		if (ano.toString().length() != 4) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identificador do ano inválido");
+		}
+		return ResponseEntity.status(HttpStatus.OK).body(service.buscarDividasDoAno(idUsuario, ano));
+	}
+	
 	
 }

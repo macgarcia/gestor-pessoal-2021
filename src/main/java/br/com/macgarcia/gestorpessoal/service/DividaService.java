@@ -3,6 +3,7 @@ package br.com.macgarcia.gestorpessoal.service;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -141,5 +142,14 @@ public class DividaService {
 		return dividas.sorted(Comparator.comparing(Divida::getDataDivida))
 				.map(e -> {return new DividaDtoSaida(e);})
 				.collect(Collectors.toList());
+	}
+
+	//Utilizado para relatório anual
+	@Transactional
+	public Map<Integer, List<DividaDtoSaida>> buscarDividasDoAno(Long idUsuario, Integer ano) {
+		Stream<Divida> dividas = dao.buscarDividasDoAno(idUsuario, ano);
+		return dividas.sorted(Comparator.comparing(Divida::getDataDivida))
+				.map(e -> {return new DividaDtoSaida(e);})
+				.collect(Collectors.groupingBy(DividaDtoSaida::getMesDaData));
 	}
 }

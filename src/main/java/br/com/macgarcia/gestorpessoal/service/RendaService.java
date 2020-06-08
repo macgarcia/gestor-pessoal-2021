@@ -3,6 +3,7 @@ package br.com.macgarcia.gestorpessoal.service;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -144,6 +145,15 @@ public class RendaService {
 		return rendas.sorted(Comparator.comparing(Renda::getDataRenda))
 				.map(e -> {return new RendaDtoSaida(e);})
 				.collect(Collectors.toList());
+	}
+
+	//Utilizado para relatório anual
+	@Transactional
+	public Map<Integer, List<RendaDtoSaida>> buscarRendasDoAno(Long idUsuario, Integer ano) {
+		Stream<Renda> rendas = dao.buscarRendasDoAno(idUsuario, ano);
+		return rendas.sorted(Comparator.comparing(Renda::getDataRenda))
+				.map(e -> {return new RendaDtoSaida(e);})
+				.collect(Collectors.groupingBy(RendaDtoSaida::getMesDaData));
 	}
 
 }

@@ -95,5 +95,6 @@ public class Divida extends AbstractEntity {
 
 	public void setUsuario(Usuario usuario) {
 		this.usuario = usuario;
-	}	
+	}
+
 }
