@@ -183,5 +183,4 @@ public class RendaResource {
 		}
 		return ResponseEntity.status(HttpStatus.OK).body(service.buscarRendasDoAno(idUsuario, ano));
 	}
-
 }
