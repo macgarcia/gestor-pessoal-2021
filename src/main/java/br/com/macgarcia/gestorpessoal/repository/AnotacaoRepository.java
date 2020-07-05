@@ -12,4 +12,7 @@ public interface AnotacaoRepository extends JpaRepository<Anotacao, Long>{
 
 	@Query("select a from Anotacao a where a.usuario.id = :idUsuario")
 	Page<Anotacao> buscarAnotacoesPaginado(@Param("idUsuario") Long idUsuario, Pageable page);
+	
+	@Query("select a from Anotacao a where a.usuario.id = :idUsuario and lower(a.titulo) like %:key%")
+	Page<Anotacao> buscarAnotacoesPorPesquisa(@Param("idUsuario") Long idUsuario, @Param("key") String key, Pageable page);
 }

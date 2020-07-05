@@ -21,27 +21,32 @@ import br.com.macgarcia.gestorpessoal.repository.UsuarioRepository;
 
 @Service
 public class AnotacaoService {
-
-	@Autowired
+	
 	private AnotacaoRepository dao;
-	@Autowired
 	private UsuarioRepository usuarioDao;
+	
+	@Autowired
+	public AnotacaoService(AnotacaoRepository dao, UsuarioRepository usuarioDao) {
+		this.dao = dao;
+		this.usuarioDao = usuarioDao;
+	}
 
 	public Page<AnotacaoDtoSaida> buscarTodasAnotacoes(Long idUsuario, Pageable page) {
 		var anotacoes = dao.buscarAnotacoesPaginado(idUsuario, page);
-		var list = anotacoes.stream().sorted(Comparator.comparing(Anotacao::getId))
-				.map(e -> {return new AnotacaoDtoSaida(e);}).collect(Collectors.toList());
+		var list = anotacoes.stream()
+				.sorted(Comparator.comparing(Anotacao::getId))
+				.map(e -> {return new AnotacaoDtoSaida(e);})
+				.collect(Collectors.toList());
 		return new PageImpl<AnotacaoDtoSaida>(list, anotacoes.getPageable(), anotacoes.getTotalElements());
 	}
 	
 	public Page<AnotacaoDtoSaida> buscarAnotacoesPorPesquisa(Long idUsuario, String key, Pageable page) {
-		var anotacoes = dao.buscarAnotacoesPaginado(idUsuario, page);
+		var anotacoes = dao.buscarAnotacoesPorPesquisa(idUsuario, key.toLowerCase(), page);
 		var list = anotacoes.stream()
 				.sorted(Comparator.comparing(Anotacao::getId))
-				.filter(e -> e.getTitulo().toLowerCase().contains(key.toLowerCase()))
 				.map(e -> {return new AnotacaoDtoSaida(e);})
 				.collect(Collectors.toList());
-		return new PageImpl<AnotacaoDtoSaida>(list, anotacoes.getPageable(), list.size());
+		return new PageImpl<AnotacaoDtoSaida>(list, anotacoes.getPageable(), anotacoes.getTotalElements());
 	}
 
 	@Transactional
@@ -70,7 +75,5 @@ public class AnotacaoService {
 		}
 		return Optional.empty();
 	}
-
-
 
 }

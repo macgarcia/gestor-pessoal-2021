@@ -47,8 +47,7 @@ public class AnotacaoResource {
 	@GetMapping(value = "/unica/{id}")
 	public ResponseEntity<?> buscarUnicaAnotacao(@PathVariable("id") Long id) {
 		if (id <= 0) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-					.body("Identificador inválido");
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identificador inválido");
 		}
 		Optional<AnotacaoDtoSaida> possivelAnotacao = service.buscarUnica(id);
 		if (!possivelAnotacao.isPresent()) {
@@ -111,5 +110,6 @@ public class AnotacaoResource {
 		}
 		service.apagarAnotacao(idAnotacao);
 		return ResponseEntity.status(HttpStatus.OK).build();
-	}	
+	}
+	
 }
