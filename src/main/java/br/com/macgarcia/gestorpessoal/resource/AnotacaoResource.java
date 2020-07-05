@@ -5,6 +5,8 @@ import java.util.Optional;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -55,17 +57,26 @@ public class AnotacaoResource {
 		return ResponseEntity.status(HttpStatus.OK).body(possivelAnotacao.get());
 	}
 
+	//Buscar todas as anotações do usuário.
 	@Operation(summary = "Buscar todas as anotações do usuário", description = "Através do identificador do usuário é retornado todas as suas anotações")
 	@ApiResponse(responseCode = "200", description = "Recuperou as informações solicitadas")
 	@ApiResponse(responseCode = "400", description = "Identificador do usuário inválido")
 	@GetMapping(value = "/{idUsuario}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<?> buscarAnotacoesDoUsuario(@PathVariable("idUsuario") Long idUsuario) {
+	public ResponseEntity<?> buscarAnotacoesDoUsuario(@PathVariable("idUsuario") Long idUsuario, @PageableDefault(page = 0, size = 6) Pageable page) {
 		if (idUsuario <= 0) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-					.body("Identificador inválido");
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identificador inválido");
 		}
-		return ResponseEntity.status(HttpStatus.OK)
-				.body(service.buscarAnotacoes());
+		return ResponseEntity.status(HttpStatus.OK).body(service.buscarTodasAnotacoes(idUsuario, page));
+	}
+	
+	//Buscar todas as anotações do usuário, em uma pesquisa por chave
+	@GetMapping(value = "/pesquisar/{idUsuario}/{key}")
+	public ResponseEntity<?> buscarAnotacoesDoUsuarioPorPesquisa(@PathVariable("idUsuario") Long idUsuario, @PathVariable("key") String key,
+			@PageableDefault(page = 0, size = 6) Pageable page) {
+		if (idUsuario <= 0) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identificador inválido");
+		}
+		return ResponseEntity.status(HttpStatus.OK).body(service.buscarAnotacoesPorPesquisa(idUsuario, key, page));
 	}
 	
 	@Operation(summary = "Criação de uma nova anotação", description = "Criação de uma nova anotação baseado json que esta no corpo da requisição")

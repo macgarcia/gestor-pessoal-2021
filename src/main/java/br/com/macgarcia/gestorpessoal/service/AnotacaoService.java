@@ -1,14 +1,15 @@
 package br.com.macgarcia.gestorpessoal.service;
 
 import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import br.com.macgarcia.gestorpessoal.DTO.entrada.AnotacaoDtoEntrada;
@@ -26,12 +27,21 @@ public class AnotacaoService {
 	@Autowired
 	private UsuarioRepository usuarioDao;
 
-	public List<AnotacaoDtoSaida> buscarAnotacoes() {
-		Stream<Anotacao> anotacoes = dao.findAll().stream();
-		return anotacoes
-				.sorted(Comparator.comparing(Anotacao::getId).reversed())
+	public Page<AnotacaoDtoSaida> buscarTodasAnotacoes(Long idUsuario, Pageable page) {
+		var anotacoes = dao.buscarAnotacoesPaginado(idUsuario, page);
+		var list = anotacoes.stream().sorted(Comparator.comparing(Anotacao::getId))
+				.map(e -> {return new AnotacaoDtoSaida(e);}).collect(Collectors.toList());
+		return new PageImpl<AnotacaoDtoSaida>(list, anotacoes.getPageable(), anotacoes.getTotalElements());
+	}
+	
+	public Page<AnotacaoDtoSaida> buscarAnotacoesPorPesquisa(Long idUsuario, String key, Pageable page) {
+		var anotacoes = dao.buscarAnotacoesPaginado(idUsuario, page);
+		var list = anotacoes.stream()
+				.sorted(Comparator.comparing(Anotacao::getId))
+				.filter(e -> e.getTitulo().toLowerCase().contains(key.toLowerCase()))
 				.map(e -> {return new AnotacaoDtoSaida(e);})
 				.collect(Collectors.toList());
+		return new PageImpl<AnotacaoDtoSaida>(list, anotacoes.getPageable(), list.size());
 	}
 
 	@Transactional
@@ -60,5 +70,7 @@ public class AnotacaoService {
 		}
 		return Optional.empty();
 	}
+
+
 
 }
