@@ -3,6 +3,8 @@ package br.com.macgarcia.gestorpessoal.resource;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -67,25 +69,26 @@ public class DividaResource {
 	@ApiResponse(responseCode = "200", description = "Recuperou as informações solicitadas")
 	@ApiResponse(responseCode = "400", description = "Identificador do usuário inválido")
 	@GetMapping(value = "/{idUsuario}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<?> buscarDividasDoUsuario(@PathVariable("idUsuario") Long idUsuario) {
+	public ResponseEntity<?> buscarDividasDoUsuario(@PathVariable("idUsuario") Long idUsuario, @PageableDefault(page = 0, size = 5) Pageable page) {
 		if (idUsuario <= 0) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identificador inválido");
 		}
-		return ResponseEntity.status(HttpStatus.OK).body(service.buscarTodasAsDividas(idUsuario));
+		return ResponseEntity.status(HttpStatus.OK).body(service.buscarTodasAsDividas(idUsuario, page));
 	}
 	
 	@Operation(summary = "Buscar todas as dívidas do usuário de um mês", description = "Através do identificador é retornada as dívidas do usuário")
 	@ApiResponse(responseCode = "200", description = "Recuperou as informações solicitadas")
 	@ApiResponse(responseCode = "400", description = "Identificador inválido")
 	@GetMapping(value = "/mesSelecionado/{idUsuario}/{mesSelecionado}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<?> buscarDividasDoMesSelecionado(@PathVariable("idUsuario") Long idUsuario, @PathVariable("mesSelecionado") Integer mes) {
+	public ResponseEntity<?> buscarDividasDoMesSelecionado(@PathVariable("idUsuario") Long idUsuario, 
+			@PathVariable("mesSelecionado") Integer mes, @PageableDefault(page = 0, size = 5) Pageable page) {
 		if (idUsuario <= 0) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identificador inválido");
 		}
 		if (mes > 12 || mes <= 0) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Mês informado inválido");
 		}
-		return ResponseEntity.status(HttpStatus.OK).body(service.buscarDividasDoMesSelevionado(idUsuario, mes));
+		return ResponseEntity.status(HttpStatus.OK).body(service.buscarDividasDoMesSelecionado(idUsuario, mes, page));
 	}
 	
 	@Operation(summary = "Pesquisa de dívidas", 

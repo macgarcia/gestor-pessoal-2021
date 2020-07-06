@@ -1,5 +1,6 @@
 package br.com.macgarcia.gestorpessoal.repository;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,4 +24,8 @@ public interface RendaRepository extends JpaRepository<Renda, Long> {
 	//Método de relatório anual
 	@Query("select r from Renda r where r.usuario.id = :idUsuario and year(r.dataRenda) = :ano")
 	Stream<Renda> buscarRendasDoAno(@Param("idUsuario") Long idUsuario, @Param("ano") Integer ano);
+	
+	//Método para enviar as informações mensais
+	@Query("select r from Renda r where r.usuario.id = :idUsuario and month(r.dataRenda) = :mesSelecionado")
+	List<Renda> buscarRendas(@Param("idUsuario") Long idUsuario, @Param("mesSelecionado") Integer mesSelecionado);
 }

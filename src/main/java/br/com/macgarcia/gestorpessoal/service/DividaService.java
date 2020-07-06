@@ -16,6 +16,9 @@ import javax.transaction.Transactional;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import br.com.macgarcia.gestorpessoal.DTO.entrada.DividaDtoEntrada;
@@ -28,14 +31,19 @@ import br.com.macgarcia.gestorpessoal.repository.UsuarioRepository;
 @Service
 public class DividaService {
 	
-	@Autowired
-	private DividaRepository dao;
-	
-	@Autowired
-	private UsuarioRepository usuarioDao;
-	
 	@PersistenceContext
 	private EntityManager em;
+		
+	private DividaRepository dao;
+	private UsuarioRepository usuarioDao;
+	
+	private List<DividaDtoSaida> result;
+	
+	@Autowired
+	public DividaService(DividaRepository dao, UsuarioRepository usuarioDao) {
+		this.dao = dao;
+		this.usuarioDao = usuarioDao;
+	}
 
 	public boolean verificarRegistro(Long idDivida) {
 		Optional<Divida> possivelDivida = dao.findById(idDivida);
@@ -58,21 +66,28 @@ public class DividaService {
 			return false;
 		}
 	}
-
-	@Transactional
-	public List<DividaDtoSaida> buscarTodasAsDividas(Long idUsuario) {
-		Stream<Divida> dividas = dao.buscarTodasAsDividasDoUsuario(idUsuario);
-		return dividas.sorted(Comparator.comparing(Divida::getDataDivida))
+	
+	//Montagem do retorno para o cliente
+	private void montarResultado(Page<Divida> list) {
+		this.result = list.stream()
+				.sorted(Comparator.comparing(Divida::getDataDivida))
 				.map(e -> {return new DividaDtoSaida(e);})
 				.collect(Collectors.toList());
 	}
 
 	@Transactional
-	public List<DividaDtoSaida> buscarDividasDoMesSelevionado(Long idUsuario, Integer mes) {
-		Stream<Divida> dividas = dao.buscarDividasDoMesSelecionado(idUsuario, mes);
-		return dividas.sorted(Comparator.comparing(Divida::getDataDivida))
-				.map(e -> {return new DividaDtoSaida(e);})
-				.collect(Collectors.toList());
+	public Page<DividaDtoSaida> buscarTodasAsDividas(Long idUsuario, Pageable page) {
+		var dividas = dao.buscarTodasAsDividasDoUsuario(idUsuario, page);
+		montarResultado(dividas);
+		return new PageImpl<DividaDtoSaida>(result, page, dividas.getTotalElements());
+	}
+
+	@Transactional
+	public Page<DividaDtoSaida> buscarDividasDoMesSelecionado(Long idUsuario, Integer mes, Pageable page) {
+		var dividas = dao.buscarDividasDoMesSelecionado(idUsuario, mes, page);
+		montarResultado(dividas);
+		return new PageImpl<DividaDtoSaida>(result, page, dividas.getTotalElements());
+		
 	}
 
 	@Transactional
