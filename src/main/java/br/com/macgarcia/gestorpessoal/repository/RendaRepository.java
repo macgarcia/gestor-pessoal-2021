@@ -3,6 +3,8 @@ package br.com.macgarcia.gestorpessoal.repository;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,10 +14,10 @@ import br.com.macgarcia.gestorpessoal.model.Renda;
 public interface RendaRepository extends JpaRepository<Renda, Long> {
 	
 	@Query("select r from Renda r where r.usuario.id = :idUsuario")
-	Stream<Renda> buscarRendasDoUsuario(@Param("idUsuario") Long idUsuario);
+	Page<Renda> buscarRendasDoUsuario(@Param("idUsuario") Long idUsuario, Pageable page);
 
 	@Query("select r from Renda r where r.usuario.id = :idUsuario and month(r.dataRenda) = :mesSelecionado")
-	Stream<Renda> buscarRendasDoMesSelecionado(@Param("idUsuario") Long idUsuario, @Param("mesSelecionado") Integer mesSelecionado);
+	Page<Renda> buscarRendasDoMesSelecionado(@Param("idUsuario") Long idUsuario, @Param("mesSelecionado") Integer mesSelecionado, Pageable page);
 	
 	//Método de relatório mensal
 	@Query("select r from Renda r where r.usuario.id = :idUsuario and month(r.dataRenda) = :mes and year(r.dataRenda) = :ano")

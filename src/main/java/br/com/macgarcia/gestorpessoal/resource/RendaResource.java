@@ -1,8 +1,8 @@
 package br.com.macgarcia.gestorpessoal.resource;
 
-import javax.validation.Valid;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -39,25 +39,28 @@ public class RendaResource {
 	@ApiResponse(responseCode = "200", description = "Recuperou as informações solicitadas")
 	@ApiResponse(responseCode = "400", description = "Identificador do usuário inválido")
 	@GetMapping(value = "/{idUsuario}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<?> buscarTodasRendasDoUsuario(@PathVariable("idUsuario") Long idUsuario) {
+	public ResponseEntity<?> buscarTodasRendasDoUsuario(@PathVariable("idUsuario") Long idUsuario, 
+														@PageableDefault(page = 0, size = 5) Pageable page) {
 		if (idUsuario <= 0) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identificador inválido");
 		}
-		return ResponseEntity.status(HttpStatus.OK).body(service.buscarRendas(idUsuario));
+		return ResponseEntity.status(HttpStatus.OK).body(service.buscarRendas(idUsuario, page));
 	}
 	
 	@Operation(summary = "Buscar todas as rendas de um mês", description = "Através do identificador e o mês selecionado, é retornada a lista de rendas")
 	@ApiResponse(responseCode = "200", description = "Recuperou as informações solicitadas")
 	@ApiResponse(responseCode = "400", description = "Identificadores inválido")
 	@GetMapping(value = "/mesSelecionado/{idUsuario}/{mes}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<?> buscarRendasDoMesSelecionado(@PathVariable("idUsuario") Long idUsuario, @PathVariable("mes") Integer mesSelecionado) {
+	public ResponseEntity<?> buscarRendasDoMesSelecionado(@PathVariable("idUsuario") Long idUsuario, 
+														  @PathVariable("mes") Integer mesSelecionado,
+														  @PageableDefault(page = 0, size = 5) Pageable page) {
 		if (idUsuario <= 0) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identificador inválido");
 		}
-		if ( mesSelecionado > 12 || mesSelecionado <= 0) {
+		if (mesSelecionado > 12 || mesSelecionado <= 0) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Indicador do mês inválido");
 		}
-		return ResponseEntity.status(HttpStatus.OK).body(service.buscarRendasDoMesSelecionaro(idUsuario, mesSelecionado));
+		return ResponseEntity.status(HttpStatus.OK).body(service.buscarRendasDoMesSelecionaro(idUsuario, mesSelecionado, page));
 	}
 	
 	@Operation(summary = "Buscar unica renda do usuário", description = "Através do identificador é retornada a informação especifica")
@@ -84,21 +87,25 @@ public class RendaResource {
 	@ApiResponse(responseCode = "400", description = "Identificadores inválido")
 	@GetMapping(value = "/pesquisar/{idUsuario}/{descricao}/{dataInicial}/{dataFinal}")
 	public ResponseEntity<?> buscarRendasPorPesquisa(@PathVariable("idUsuario") Long idUsuario,
-			@PathVariable("descricao") String descricao, 
-			@PathVariable("dataInicial") String dataInicial,
-			@PathVariable("dataFinal") String dataFinal) {
+													 @PathVariable("descricao") String descricao, 
+													 @PathVariable("dataInicial") String dataInicial,
+													 @PathVariable("dataFinal") String dataFinal) {
 		if (idUsuario <= 0) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
 		}
-		return ResponseEntity.status(HttpStatus.OK)
-				.body(service.pesquisar(idUsuario, descricao, dataInicial, dataFinal));
+		return ResponseEntity.status(HttpStatus.OK).body(service.pesquisar(idUsuario, descricao, dataInicial, dataFinal));
 	}
 
 	@Operation(summary = "Serviço para adição de uma nova renda", description = "Adição de uma nova renda a partir dos dados embutidos na requisição")
 	@ApiResponse(responseCode = "200", description = "Requisição feita com sucesso")
+	@ApiResponse(responseCode = "400", description = "Dados inconsistentes")
 	@ApiResponse(responseCode = "500", description = "Erro ao salvar")
 	@PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<?> salvarRenda(@Valid @RequestBody RendaDtoEntrada dto) {
+	public ResponseEntity<?> salvarRenda(@RequestBody RendaDtoEntrada dto) {
+		boolean validou = service.validar(dto);
+		if (!validou) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(service.getMensagemDeErro());
+		}
 		boolean salvo = service.salvar(dto);
 		if (!salvo) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno");

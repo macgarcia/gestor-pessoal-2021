@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -13,9 +14,13 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
-import javax.validation.Valid;
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import br.com.macgarcia.gestorpessoal.DTO.entrada.RendaDtoEntrada;
@@ -28,25 +33,59 @@ import br.com.macgarcia.gestorpessoal.repository.UsuarioRepository;
 @Service
 public class RendaService {
 
-	@Autowired
 	private RendaRepository dao;
-
-	@Autowired
 	private UsuarioRepository usuarioDao;
+	private Validator validator;
+	private String mensagemDeErro;
+	
+	private List<RendaDtoSaida> result;
 	
 	@PersistenceContext
 	private EntityManager em;
-
-	@Transactional
-	public List<RendaDtoSaida> buscarRendas(Long idUsuario) {
-		Stream<Renda> rendas = dao.buscarRendasDoUsuario(idUsuario);
-		return rendas.sorted(Comparator.comparing(Renda::getDataRenda))
-				.map(e -> {return new RendaDtoSaida(e);})
-				.collect(Collectors.toList());
+	
+	@Autowired
+	public RendaService(RendaRepository dao, UsuarioRepository usuarioDao, Validator validator) {
+		this.dao = dao;
+		this.usuarioDao = usuarioDao;
+		this.validator = validator;
+	}
+	
+	//Método para validação do objeto de entrada
+	public boolean validar(RendaDtoEntrada dto) {
+		Set<ConstraintViolation<RendaDtoEntrada>> erros = validator.validate(dto);
+		if (!erros.isEmpty()) {
+			this.mensagemDeErro = erros.stream()
+					.map(e -> e.getPropertyPath().toString().toUpperCase() + ": " + e.getMessageTemplate())
+					.collect(Collectors.joining("\n"));
+			return false;
+		}
+		return true;
+	}
+	
+	//Método que monta o retorno para o cliente.
+	private void montarRetorno(Page<Renda> list) {
+		this.result = list.stream()
+						  .sorted(Comparator.comparing(Renda::getDataRenda))
+						  .map(e -> {return new RendaDtoSaida(e);})
+						  .collect(Collectors.toList());
 	}
 
 	@Transactional
-	public boolean salvar(@Valid RendaDtoEntrada dto) {
+	public Page<RendaDtoSaida> buscarRendas(Long idUsuario, Pageable page) {
+		var rendas = dao.buscarRendasDoUsuario(idUsuario, page);
+		this.montarRetorno(rendas);
+		return new PageImpl<RendaDtoSaida>(result, page, rendas.getTotalElements());
+	}
+
+	@Transactional
+	public Page<RendaDtoSaida> buscarRendasDoMesSelecionaro(Long idUsuario, Integer mesSelecionado, Pageable page) {
+		var rendas =  dao.buscarRendasDoMesSelecionado(idUsuario, mesSelecionado, page);
+		this.montarRetorno(rendas);
+		return new PageImpl<RendaDtoSaida>(result, page, rendas.getTotalElements());
+	}
+	
+	@Transactional
+	public boolean salvar(RendaDtoEntrada dto) {
 		try {
 			Usuario usuario = usuarioDao.findById(dto.getIdUsuario()).get();
 			Renda novaRenda = dto.criar(usuario);
@@ -55,13 +94,6 @@ public class RendaService {
 		} catch (Exception e) {
 			return false;
 		}
-	}
-
-	@Transactional
-	public List<RendaDtoSaida> buscarRendasDoMesSelecionaro(Long idUsuario, Integer mesSelecionado) {
-		return dao.buscarRendasDoMesSelecionado(idUsuario, mesSelecionado).map(e -> {
-			return new RendaDtoSaida(e);
-		}).collect(Collectors.toList());
 	}
 
 	public RendaDtoSaida buscarUnicaRenda(Long idRenda) {
@@ -77,6 +109,8 @@ public class RendaService {
 		definirParametros(sql, descricao, dataInicial, dataFinal);
 		
 		TypedQuery<Renda> query = em.createQuery(sql.toString(), Renda.class);
+//		query.setFirstResult(0);
+//		query.setMaxResults(5);
 		
 		definirValores(query, descricao, dataInicial, dataFinal);
 		
@@ -154,6 +188,10 @@ public class RendaService {
 		return rendas.sorted(Comparator.comparing(Renda::getDataRenda))
 				.map(e -> {return new RendaDtoSaida(e);})
 				.collect(Collectors.groupingBy(RendaDtoSaida::getMesDaData));
+	}
+
+	public String getMensagemDeErro() {
+		return mensagemDeErro;
 	}
 
 }
