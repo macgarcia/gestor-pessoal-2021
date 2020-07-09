@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -102,22 +101,40 @@ public class RendaService {
 	}
 
 	@Transactional
-	public List<RendaDtoSaida> pesquisar(Long idUsuario, String descricao, String dataInicial, String dataFinal) {
-		StringBuilder sql = new StringBuilder();
-		sql.append("select r from Renda r where r.usuario.id = " + idUsuario);
+	public Page<RendaDtoSaida> pesquisar(Long idUsuario,
+										 String descricao, 
+										 String dataInicial, 
+										 String dataFinal, 
+										 Pageable page) {
+
+		StringBuilder sql = new StringBuilder()
+				.append("select r from Renda r where r.usuario.id = " + idUsuario);
+		
+		StringBuilder sqlCount = new StringBuilder()
+				.append("select count(*) from Renda r where r.usuario.id = " + idUsuario);
 		
 		definirParametros(sql, descricao, dataInicial, dataFinal);
+		definirParametros(sqlCount, descricao, dataInicial, dataFinal);
 		
 		TypedQuery<Renda> query = em.createQuery(sql.toString(), Renda.class);
-//		query.setFirstResult(0);
-//		query.setMaxResults(5);
+		TypedQuery<Long> queryCount = em.createQuery(sqlCount.toString(), Long.class);
 		
 		definirValores(query, descricao, dataInicial, dataFinal);
+		definirValores(queryCount, descricao, dataInicial, dataFinal);
 		
-		Stream<Renda> rendas = query.getResultStream();
-		return rendas.sorted(Comparator.comparing(Renda::getDataRenda))
+		//Paginando a consulta.
+		query.setFirstResult(page.getPageNumber() * page.getPageSize());
+		query.setMaxResults(page.getPageSize());
+		
+		var totalDeRegistros = queryCount.getSingleResult();
+		var rendas = query.getResultStream();
+		
+		var collect = rendas
+				.sorted(Comparator.comparing(Renda::getDataRenda))
 				.map(e -> {return new RendaDtoSaida(e);})
 				.collect(Collectors.toList());
+		 
+		return new PageImpl<RendaDtoSaida>(collect, page, totalDeRegistros);
 	}
 
 	private void definirParametros(StringBuilder sql, String... campos) {
@@ -168,8 +185,7 @@ public class RendaService {
 	
 	//Verifica a existencia do registro
 	public boolean verificarExistencia(Long id) {
-		Optional<Renda> renda = dao.findById(id);
-		return renda.isPresent() ? true : false;
+		return dao.existsById(id);
 	}
 
 	//Utilizado para relatório mensal

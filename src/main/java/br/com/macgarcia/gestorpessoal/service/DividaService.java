@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -13,7 +13,9 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
+import javax.validation.ConstraintViolation;
 import javax.validation.Valid;
+import javax.validation.Validator;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -36,18 +38,33 @@ public class DividaService {
 		
 	private DividaRepository dao;
 	private UsuarioRepository usuarioDao;
+	private Validator validator;
+	private String mensagemDeErro;
 	
 	private List<DividaDtoSaida> result;
 	
 	@Autowired
-	public DividaService(DividaRepository dao, UsuarioRepository usuarioDao) {
+	public DividaService(DividaRepository dao, UsuarioRepository usuarioDao, Validator validator) {
 		this.dao = dao;
 		this.usuarioDao = usuarioDao;
+		this.validator = validator;
+	}
+	
+	//Método para validar as informações de entrada.
+	public boolean validar(DividaDtoEntrada dto) {
+		Set<ConstraintViolation<DividaDtoEntrada>> erros = validator.validate(dto);
+		if (!erros.isEmpty()) {
+			this.mensagemDeErro = erros.stream()
+					.map(e -> e.getPropertyPath().toString().toUpperCase() + ":" + e.getMessageTemplate())
+					.collect(Collectors.joining("\n"));
+			return false;
+		}
+		return true;
 	}
 
 	public boolean verificarRegistro(Long idDivida) {
-		Optional<Divida> possivelDivida = dao.findById(idDivida);
-		return possivelDivida.isPresent();
+		return dao.existsById(idDivida);
+
 	}
 
 	public DividaDtoSaida buscarUnicaDivida(Long idDivida) {
@@ -91,16 +108,39 @@ public class DividaService {
 	}
 
 	@Transactional
-	public List<DividaDtoSaida> pesquisarDividas(Long idUsuario, String descricao, String dataInicial, String dataFinal) {
-		StringBuilder sql = new StringBuilder();
-		sql.append(" select d from Divida d where d.usuario.id = " + idUsuario);
+	public Page<DividaDtoSaida> pesquisarDividas(Long idUsuario,
+												 String descricao,
+												 String dataInicial,
+												 String dataFinal,
+												 Pageable page) {
+		StringBuilder sql = new StringBuilder().
+				append(" select d from Divida d where d.usuario.id = " + idUsuario);
+		
+		StringBuilder sqlCount = new StringBuilder()
+				.append("select count(*) from Divida d where d.usuario.id = " + idUsuario);
+		
 		definirCondicao(sql, descricao, dataInicial, dataFinal);
-		TypedQuery<Divida> query = em.createQuery(sql.toString(), Divida.class);
+		definirCondicao(sqlCount, descricao, dataInicial, dataFinal);
+		
+		TypedQuery<Divida> query 	= em.createQuery(sql.toString(), Divida.class);
+		TypedQuery<Long> queryCount = em.createQuery(sqlCount.toString(), Long.class);
+		
 		definirValores(query, descricao, dataInicial, dataFinal);
-		Stream<Divida> dividas = query.getResultStream();
-		return dividas.sorted(Comparator.comparing(Divida::getDataDivida))
+		definirValores(queryCount, descricao, dataInicial, dataFinal);
+		
+		//Paginando a consulta.
+		query.setFirstResult(page.getPageNumber() * page.getPageSize());
+		query.setMaxResults(page.getPageSize());
+		
+		var totalDeRegistros = queryCount.getSingleResult();
+		var dividas = query.getResultStream();
+		
+		var result = dividas
+				.sorted(Comparator.comparing(Divida::getDataDivida))
 				.map(e -> {return new DividaDtoSaida(e);})
 				.collect(Collectors.toList());
+		
+		return new PageImpl<DividaDtoSaida>(result, page, totalDeRegistros);
 	}
 	
 	private void definirCondicao(StringBuilder sql, String... campos) {
@@ -166,5 +206,9 @@ public class DividaService {
 		return dividas.sorted(Comparator.comparing(Divida::getDataDivida))
 				.map(e -> {return new DividaDtoSaida(e);})
 				.collect(Collectors.groupingBy(DividaDtoSaida::getMesDaData));
+	}
+	
+	public String getMensagemDeErro() {
+		return mensagemDeErro;
 	}
 }

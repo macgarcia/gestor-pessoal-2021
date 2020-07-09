@@ -89,11 +89,13 @@ public class RendaResource {
 	public ResponseEntity<?> buscarRendasPorPesquisa(@PathVariable("idUsuario") Long idUsuario,
 													 @PathVariable("descricao") String descricao, 
 													 @PathVariable("dataInicial") String dataInicial,
-													 @PathVariable("dataFinal") String dataFinal) {
+													 @PathVariable("dataFinal") String dataFinal,
+													 @PageableDefault(page = 0, size = 5) Pageable page) {
 		if (idUsuario <= 0) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
 		}
-		return ResponseEntity.status(HttpStatus.OK).body(service.pesquisar(idUsuario, descricao, dataInicial, dataFinal));
+		return ResponseEntity.status(HttpStatus.OK).body(service.pesquisar(idUsuario, descricao,
+				dataInicial, dataFinal, page));
 	}
 
 	@Operation(summary = "Serviço para adição de uma nova renda", description = "Adição de uma nova renda a partir dos dados embutidos na requisição")
@@ -115,18 +117,23 @@ public class RendaResource {
 	
 	@Operation(summary = "Serviço para atualização de uma nova renda", description = "Atualização de uma renda")
 	@ApiResponse(responseCode = "200", description = "Atualização realizada com sucesso")
-	@ApiResponse(responseCode = "400", description = "Identificador inválido")
-	@ApiResponse(responseCode = "404", description = "Dados indexistentes")
+	@ApiResponse(responseCode = "400", description = "Dados inconsistentes")
+	@ApiResponse(responseCode = "404", description = "Dados inexistentes")
 	@ApiResponse(responseCode = "500", description = "Erro na atualização")
 	@PutMapping(value = "/{idRenda}", consumes = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<?> atualizarRenda(@PathVariable("idRenda") Long idRenda, @RequestBody RendaDtoEntrada dto) {
 		if (idRenda <= 0) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identificador inválido");
 		}
 		
 		boolean existe = service.verificarExistencia(idRenda);
 		if (!existe) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Dados innexistentes");
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Dados inexistentes");
+		}
+		
+		boolean validou = service.validar(dto);
+		if (!validou) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Dados inconsistentes");
 		}
 		
 		boolean atualizaou = service.atualizarRenda(idRenda, dto);
@@ -163,7 +170,8 @@ public class RendaResource {
 	@ApiResponse(responseCode = "400", description = "Identificador inválido")
 	@GetMapping(value = "/relatorio/{idUsuario}/{mes}/{ano}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<?> gerarRelatorioMensal(@PathVariable("idUsuario") Long idUsuario,
-			@PathVariable("mes") Integer mes, @PathVariable("ano") Integer ano) {
+												  @PathVariable("mes") Integer mes,
+												  @PathVariable("ano") Integer ano) {
 		if (idUsuario <= 0) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identificador inválido");
 		}

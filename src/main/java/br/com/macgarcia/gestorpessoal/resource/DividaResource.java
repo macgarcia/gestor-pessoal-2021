@@ -1,7 +1,5 @@
 package br.com.macgarcia.gestorpessoal.resource;
 
-import javax.validation.Valid;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -39,10 +37,16 @@ public class DividaResource {
 	
 	@Operation(summary = "Salvar uma nova dívida", description = "A partir dos dados que estiverem no corpo da requisição, será criado o novo registro")
 	@ApiResponse(responseCode = "200", description = "Registro criado com sucesso")
+	@ApiResponse(responseCode = "400", description = "Dados inconsistentes")
 	@ApiResponse(responseCode = "500", description = "Erro interno ao tentar salvar os dados")
 	@PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<?> criarNovaDivida(@Valid @RequestBody DividaDtoEntrada dto) {
-		boolean salvo = service.salvarDivida(dto);
+	public ResponseEntity<?> criarNovaDivida(@RequestBody DividaDtoEntrada dto) {
+		boolean validou = service.validar(dto);
+		if (!validou) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(service.getMensagemDeErro());
+		}
+		
+ 		boolean salvo = service.salvarDivida(dto);
 		if (!salvo) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao salvar");
 		}
@@ -69,7 +73,8 @@ public class DividaResource {
 	@ApiResponse(responseCode = "200", description = "Recuperou as informações solicitadas")
 	@ApiResponse(responseCode = "400", description = "Identificador do usuário inválido")
 	@GetMapping(value = "/{idUsuario}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<?> buscarDividasDoUsuario(@PathVariable("idUsuario") Long idUsuario, @PageableDefault(page = 0, size = 5) Pageable page) {
+	public ResponseEntity<?> buscarDividasDoUsuario(@PathVariable("idUsuario") Long idUsuario, 
+													@PageableDefault(page = 0, size = 5) Pageable page) {
 		if (idUsuario <= 0) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identificador inválido");
 		}
@@ -81,7 +86,8 @@ public class DividaResource {
 	@ApiResponse(responseCode = "400", description = "Identificador inválido")
 	@GetMapping(value = "/mesSelecionado/{idUsuario}/{mesSelecionado}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<?> buscarDividasDoMesSelecionado(@PathVariable("idUsuario") Long idUsuario, 
-			@PathVariable("mesSelecionado") Integer mes, @PageableDefault(page = 0, size = 5) Pageable page) {
+														   @PathVariable("mesSelecionado") Integer mes, 
+														   @PageableDefault(page = 0, size = 5) Pageable page) {
 		if (idUsuario <= 0) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identificador inválido");
 		}
@@ -98,13 +104,16 @@ public class DividaResource {
 	@ApiResponse(responseCode = "200", description = "Requisição feita com sucesso")
 	@ApiResponse(responseCode = "400", description = "Identificador inválido")
 	@GetMapping(value = "/pesquisar/{idUsuario}/{descricao}/{dataInicial}/{dataFinal}")
-	public ResponseEntity<?> pesuisarDividas(@PathVariable("idUsuario") Long idUsuario, @PathVariable("descricao") String descricao,
-			@PathVariable("dataInicial") String dataInicial, @PathVariable("dataFinal") String dataFinal) {
+	public ResponseEntity<?> pesuisarDividas(@PathVariable("idUsuario") Long idUsuario,
+											 @PathVariable("descricao") String descricao,
+											 @PathVariable("dataInicial") String dataInicial,
+											 @PathVariable("dataFinal") String dataFinal,
+											 @PageableDefault(page = 0, size = 5) Pageable page) {
 		if (idUsuario <= 0) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identificador inválido");
 		}
 		return ResponseEntity.status(HttpStatus.OK)
-				.body(service.pesquisarDividas(idUsuario, descricao, dataInicial, dataFinal));
+				.body(service.pesquisarDividas(idUsuario, descricao, dataInicial, dataFinal, page));
 	}
 
 	@Operation(summary = "Atualização de uma dívida", description = "Através do identificador a divida será atualizada com os dados da requisição")
@@ -150,7 +159,8 @@ public class DividaResource {
 	@ApiResponse(responseCode = "400", description = "Identificador inválido")
 	@GetMapping(value = "/relatorio/{idUsuario}/{mes}/{ano}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<?> gerarRelatotioMensal(@PathVariable("idUsuario") Long idUsuario,
-			@PathVariable("mes") Integer mes, @PathVariable("ano") Integer ano) {
+												  @PathVariable("mes") Integer mes,
+												  @PathVariable("ano") Integer ano) {
 		if (idUsuario <= 0) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identificador inválido");
 		}
