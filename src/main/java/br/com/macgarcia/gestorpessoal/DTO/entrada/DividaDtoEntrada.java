@@ -17,21 +17,21 @@ public class DividaDtoEntrada implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	@NotBlank(message = "Descrição da divida é obrigatória")
+	@NotBlank(message = "Descrição da divida é obrigatória.")
 	private String descricao;
 
-	@NotNull(message = "Valor da divida é obrigatório")
-	@Positive(message = "Informe um valor válido")
+	@NotNull(message = "Valor da divida é obrigatório.")
+	@Positive(message = "Informe um valor válido.")
 	private Double valor;
 
 	@JsonFormat(shape = Shape.STRING, pattern = "dd/MM/yyyy")
-	@NotNull(message = "Data da divida é obrigatória")
+	@NotNull(message = "Data da divida é obrigatória.")
 	private LocalDate dataDivida;
 
-	@NotNull(message = "Condição da divida é obrigatório")
+	@NotNull(message = "Condição da divida é obrigatório.")
 	private boolean pago;
 
-	@NotNull(message = "Identificador do usuário é origatório")
+	@NotNull(message = "Identificador do usuário é origatório.")
 	private Long idUsuario;
 
 	public String getDescricao() {

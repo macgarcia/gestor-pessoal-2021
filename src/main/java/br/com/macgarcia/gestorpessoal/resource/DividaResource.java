@@ -104,11 +104,11 @@ public class DividaResource {
 	@ApiResponse(responseCode = "200", description = "Requisição feita com sucesso")
 	@ApiResponse(responseCode = "400", description = "Identificador inválido")
 	@GetMapping(value = "/pesquisar/{idUsuario}/{descricao}/{dataInicial}/{dataFinal}")
-	public ResponseEntity<?> pesuisarDividas(@PathVariable("idUsuario") Long idUsuario,
-											 @PathVariable("descricao") String descricao,
-											 @PathVariable("dataInicial") String dataInicial,
-											 @PathVariable("dataFinal") String dataFinal,
-											 @PageableDefault(page = 0, size = 5) Pageable page) {
+	public ResponseEntity<?> pesquisarDividas(@PathVariable("idUsuario") Long idUsuario,
+											  @PathVariable("descricao") String descricao,
+											  @PathVariable("dataInicial") String dataInicial,
+											  @PathVariable("dataFinal") String dataFinal,
+											  @PageableDefault(page = 0, size = 5) Pageable page) {
 		if (idUsuario <= 0) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identificador inválido");
 		}
@@ -118,13 +118,19 @@ public class DividaResource {
 
 	@Operation(summary = "Atualização de uma dívida", description = "Através do identificador a divida será atualizada com os dados da requisição")
 	@ApiResponse(responseCode = "200", description = "Requisição feita com sucesso")
-	@ApiResponse(responseCode = "400", description = "Identificador inválido")
+	@ApiResponse(responseCode = "400", description = "Dados inconsistentes")
 	@ApiResponse(responseCode = "500", description = "Erro interno ao tentar atualizar")
 	@PutMapping(value = "/{idDivida}", consumes = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<?> atualizarDivida(@PathVariable("idDivida") Long idDivida, @RequestBody DividaDtoEntrada dto) {
 		if (idDivida <= 0) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Identificador inválido");
 		}
+		
+		boolean validou = service.validar(dto);
+		if (!validou) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(service.getMensagemDeErro());
+		}
+		
 		boolean atualizou = service.atualizarDivida(idDivida, dto);
 		if (!atualizou) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao salvar");

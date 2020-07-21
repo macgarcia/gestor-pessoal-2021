@@ -55,7 +55,7 @@ public class DividaService {
 		Set<ConstraintViolation<DividaDtoEntrada>> erros = validator.validate(dto);
 		if (!erros.isEmpty()) {
 			this.mensagemDeErro = erros.stream()
-					.map(e -> e.getPropertyPath().toString().toUpperCase() + ":" + e.getMessageTemplate())
+					.map(e -> e.getPropertyPath().toString().toUpperCase() + ": " + e.getMessageTemplate())
 					.collect(Collectors.joining("\n"));
 			return false;
 		}
