@@ -14,9 +14,10 @@
 	<name>gestor-pessoal-2021</name>
 	<description>Aplicação para gestão pessoal</description>
 
-	<properties>
+<!--	<properties>
 		<java.version>11</java.version>
 	</properties>
+-->
 
 	<dependencies>
 		<dependency>
